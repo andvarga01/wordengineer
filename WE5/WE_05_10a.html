@@ -1,0 +1,450 @@
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+  <title>Hangmagyarázó/WE_05_10a</title>
+  <style type="text/css">
+  table, th, td {
+	border: 0;
+  }
+  th, td {
+	padding: 15px;
+	text-align: left;
+	vertical-align: top;
+  }
+  .box {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: left;
+  }
+
+  </style>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
+  <script src="./javascript/jquery-3.3.1.js"></script>
+  <script>
+  //READ THIS OBJECT FROM FILE, SAVED INTO FILE.
+  var o = new Object();
+  
+  // LOAD A JSON DOCUMENT.
+  var openFile = function(event) {
+    var input = event.target;
+    var reader = new FileReader();
+
+    reader.onload = function(){
+		var text = reader.result;
+		//console.log(reader.result);
+	
+		o = JSON.parse(text);
+		initEditor();
+    };
+	
+    reader.readAsText(input.files[0]);	
+  };
+
+  function newInput1() {
+	const os1 = {"comment":" ","elemek":{}};
+	o = os1;
+	initEditor();
+  }
+  
+  function newInput2() {
+	const os2 = {"comment":" ","elemek":{"A":[],"Á":[],"B":[],"C":[],"CS":[],"D":[],"E":[],"É":[],"F":[],"G":[],"GY":[],"H":[],"I":[],"Í":[],"J":[],"K":[],"L":[],"LY":[],"M":[],"N":[],"NY":[],"O":[],"Ó":[],"Ö":[],"Ő":[],"P":[],"R":[],"S":[],"SZ":[],"T":[],"TY":[],"U":[],"Ú":[],"Ü":[],"Ű":[],"V":[],"Z":[],"ZS":[]}};
+
+	o = os2;
+	initEditor();
+  }
+  
+  /////////////////////////////////////////////////////////////////////
+
+	var letterList = new Array();
+	var uLetter = null;
+
+	function initEditor() {
+		showHeader( false );
+		showEditor( true );
+		
+		for (var ky in o.elemek) {
+			letterList.push( ky );			
+		}
+		
+		var combo = document.getElementById("lCombo");
+		for (i in letterList) {
+			var val = letterList[i];
+			var option = document.createElement("option");
+			option.value = option.text = val;
+			try {
+				combo.add(option, null); //Standard
+			}catch(error) {
+				combo.add(option); 		// IE only
+			}
+		}
+		
+		onChooseLetter();
+		showComment( true );
+		showFooter( 1 );
+		showSave( true );
+	}
+	
+	function addToLCombo() {
+		var newLetter = document.getElementById("newLetter").value;
+		
+		if (!newLetter) {		// empty
+			alert("Üres beviteli mező, nem lett hozzáadva.")
+			return;
+		}
+		newLetter = newLetter.toUpperCase();
+		if ( isInList(letterList, newLetter) ) {
+			alert("Már van '" + newLetter + "' elem.")
+			return
+		}
+		letterList.push( newLetter );
+		saveCombo("mCombo");
+
+		var combo = document.getElementById("lCombo");
+		var option = document.createElement("option");
+		option.text = option.value = newLetter;
+		
+		try {
+			combo.add(option, null); //Standard
+		}catch(error) {
+			combo.add(option); // IE only
+		}
+		
+		alert("'" + newLetter + "' elem hozzáadva.")
+		
+		//UPDATE COMBO OF LETTER
+		setLastSelected();
+		uLetter = newLetter;		// set global variable
+		document.getElementById("uLtr").innerHTML = "<b>" + uLetter + "</b>";
+		fillMCombo();
+	}
+	
+	function setLastSelected() {
+		var select = document.getElementById( "lCombo" );
+		var length = select.options.length;
+		for (var i = 0; i <length; i++) {
+		  select.options[i].selected = null;
+		}
+		select.options[length-1].selected = true;
+	}
+	
+	function onChooseLetter() {
+		saveCombo("mCombo");
+		
+		var combo = document.getElementById("lCombo");
+		var item = combo[combo.selectedIndex];
+		
+		try {
+			uLetter = item.value;		// set global variable
+			document.getElementById("uLtr").innerHTML = "<b>" + uLetter + "</b>";
+			fillMCombo();
+		} catch(error){
+			;
+		}
+	}
+	
+	function fillMCombo() {
+		clearCombo("mCombo");
+		var combo = document.getElementById("mCombo");
+		
+		for (i in o.elemek[uLetter]) {
+			//console.log( o.elemek[uLetter][i] );
+			var option = document.createElement("option");
+			option.value = option.text = o.elemek[uLetter][i];
+			try {
+				combo.add(option, null); //Standard
+			}catch(error) {
+				combo.add(option); 		// IE only
+			}
+		}
+	}
+	
+	function addToMCombo() {
+		var uText = document.getElementById("newMean");
+		if (!uText.value) {		// empty
+			alert("Üres beviteli mező.")
+			return;
+		}
+
+		var combo = document.getElementById("mCombo");
+		var option = document.createElement("option");
+		option.text = uText.value;
+		option.value = uText.value;
+		
+		try {
+			combo.add(option, null); //Standard
+		}catch(error) {
+			combo.add(option); // IE only
+		}
+		uText.value = "";
+	};
+
+	function delFromMCombo() {
+		var combo = document.getElementById("mCombo");
+		var item = combo[combo.selectedIndex];
+		if (item) {
+			removeMSel(item);
+		} else {
+			alert("Nincs kijelölve törésre elem.");
+		}
+	};
+
+	function clearCombo(id) {
+		var select = document.getElementById(id);
+		var length = select.options.length;
+		for (i = length-1; i >= 0; i--) {
+		  select.options[i] = null;
+		}
+	}
+	
+	function saveCombo(id) {
+		var jObj = new Object();
+		var mArr = new Array();		// m = meaning
+		
+		var select = document.getElementById(id);
+		var length = select.options.length;
+		for (var i = 0; i < length; i++) {
+			mArr.push( select.options[i].value );
+		}
+		if (uLetter)
+			o.elemek[uLetter] = mArr;
+	}
+	
+	function saveComment() {
+		var v =  document.getElementById('commentText').value;
+		if (v) {
+			o.comment = v;
+		}			
+	}
+	
+	/* https://stackoverflow.com/questions/8900732/sort-objects-in-an-array-alphabetically-on-one-property-of-the-array
+	objArray.sort(function(a, b) {
+		var textA = a.DepartmentName.toUpperCase();
+		var textB = b.DepartmentName.toUpperCase();
+		return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+	});
+	*/
+	
+	function isInList(arr, e) {
+		for (var i = 0; i < arr.length; i++) {
+			if (arr[i] == e) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	function removeMSel(inp1)
+	{
+	 $("#mCombo option[value='" + inp1.value + "']").remove();
+	}
+	
+	function showHeader(isShown) {
+		const s1 = "<center><table style='background-color: #F9FAFE;border-radius: 2vh;'>"
+				+ "<tr><td width='50%'>&nbsp;<br>&nbsp;<br>"
+				+ "<input type='button' value='Teljesen üres fájl'  onclick='newInput1();'></td>"
+				+ "<td>&nbsp;<br>Üres lappal indulunk, nincs benne<br>semmilyen elem.<br>"
+				+ "Tetszőleges ABC létrehozható,<br>tetszőleges nyelven,<br>tetszőleges betűkészlettel.<br>&nbsp;</td>"
+				+ "</tr></table>";
+		const s2 = "<table style='background-color: #F9FAFE;border-radius: 2vh;'>"
+				+ "<tr><td width='50%'>&nbsp;<br>&nbsp;<br>"
+				+ "<input type='button' value='Üres magyar ABC'  onclick='newInput2();'></td>"
+				+ "<td>&nbsp;<br>A magyar ABC be van töltve,<br>"
+				+ "de egyik betűhöz sincsenek<br>értemények (jelentések) megadva.<br>&nbsp;</td>"
+				+ "</tr></table>";
+		const s3 = "<table style='background-color: #F9FAFE;border-radius: 2vh;'>"
+				+ "<tr><td width='50%'>&nbsp;<br>"
+				+ "<input type='file' id='loadDocu' accept='.json' onchange='openFile(event);'></td>"
+				+ "<td>&nbsp;<br>Ismert adatfájl betöltése.<br>&nbsp;</td>"
+				+ "</tr></table></center>";
+
+		var msg = ""
+		if (isShown)
+			msg = s1 + '<p>' + s2 + '<p>' + s3;
+		document.getElementById('header').innerHTML = msg;
+	}
+	
+	function showEditor(isShown) {
+		const s = "&nbsp;</p><hr><p>&nbsp;</p>"
+				+ "<p>"
+				+ "Válassz elemet:"
+				+ "<select name='lCombo' id='lCombo' onchange='onChooseLetter();'></select>"
+				+ "&nbsp; &nbsp; &nbsp; &nbsp;"
+				+ "Új elem:"
+				+ "<input type='text' id='newLetter'>"
+				+ "<input type='submit' value='Elküld' onClick='addToLCombo();'>"
+				+ "</p>"
+				+ "<fieldset>"
+				+ "<legend>A jelentések listájának szerkesztése </legend>"
+				+ "		<p>"
+				+ "   <div class='box'>"
+				+ "     <div>"
+				+ "		  <table name='tbl1'>"
+				+ "		  <tr><td>Elem:<br><p id='uLtr'></p></td>"  
+				+ "			  <td>Jelentések:<br><select name='mCombo' id='mCombo' size='10'></select></td>"
+				+ "		  </tr>"
+				+ "		  </table>"
+				+ "     </div>"
+				+ "     <div>"
+				+ "		  <table name='tbl2'>"
+				+ "		  <tr><td>Új jelentés felvitele:<input type='text' name='newMean' id='newMean'/></td>"
+				+ "			  <td><input type='button' value='Hozzáadás' onclick='addToMCombo()'></td>"
+				+ "		  </tr>"
+				+ "		  <tr><td>Kiválasztott jelentés törlése: </td>"
+				+ "			  <td><input type='button' value='Törlés' onclick='delFromMCombo()'></td>"
+				+ "		  </tr>"
+				+ "		  </table>"
+				+ "     </div>"
+				+ "		</p>"
+				+ "  </fieldset>";
+		var msg = "";
+
+		if (isShown)
+			msg = s;
+		
+		document.getElementById('editor').innerHTML = msg;
+	}
+	
+	function showComment(isShown) {
+		const s1 = "<p><textarea id='commentText' name='comment' rows='3' cols='33'>";
+		var s2 = "</textarea> &nbsp; Megjegyzés</p>";
+		    s2 += "<input type='button' value='ABC listázása' onclick='openABCWindow()'>";
+		
+		msg = "";
+		if (isShown)
+			msg = s1 + o.comment + s2;
+			
+		document.getElementById('comment').innerHTML = msg;
+	}
+	
+	function showFooter(idx) {
+		const footTexts = [
+				"<center><img src='./img/gondolkodo4b_ff.jpg' width='300'><p>(C) Varga András, 2019-2020. </center>",
+				"<p>&nbsp;<p><center>Ha megfelelnek a változtatások, ments el őket - ugyanazon néven, vagy egy másik néven.",
+				"Köszönjük hogy használtad a programot."
+			  ];
+				
+		document.getElementById('footer').innerHTML = "<font size='-1'>" + footTexts[ idx ] + "</font>";
+	}
+	
+	function showSave( isShown ) {
+		s = "<center><p>Adatfájl mentése: <input type='button' id='saveDocu' value='Mentés' onclick='saveDocu();'>"
+		  + " &nbsp; &nbsp; &nbsp; Kilépés mentés nélkül: <input type='button' id='btnExit' value='Kilépés' onclick='	replaceContent();'></p></center>"
+
+		document.getElementById('ex_it').innerHTML = s;
+		
+		if (isShown)
+			document.getElementById('ex_it').style.visibility = "visible";
+		else
+			document.getElementById('ex_it').style.visibility = "hidden";
+	}
+	
+	$(document).ready(function() {
+		showHeader( true );
+		showFooter( 0 );
+		showSave( false );
+	});
+
+	function replaceContent() {
+		const newContent = "<html><head></head><body><center>"
+						 + "<br><br>Köszönjük, hogy használtad a programot."
+						 + "<br><br><img src='./img/gondolkodo4b_ff.jpg' width='257'>"
+						 + "<br><br>Újra indíthatod a programot a Ctrl + F5  billenyűkombinációval.</center></body></html>";
+		document.open();
+		document.write( newContent );
+		document.close();
+	}
+	
+	function openABCWindow() {
+		saveCombo("mCombo");
+		saveComment();
+		
+		win = window.open("","ABC","menubar=1,resizable=1,width=350,height=250");
+		win.document.write("<font face = 'arial,helvetica'>"
+							+ "<center><h1>ABC</h1><h4>" + o.comment + "</h4></center>" 
+							+ onListAbc());
+	}
+
+  function onListAbc() {
+	/*
+	var abc = o["elemek"];
+	arr = new Array();
+	for (x in o.elemek) {
+		arr.push(x);
+	}
+	arr.sort(function(a, b) {
+		return (a < b) ? -1 : (a > b) ? 1 : 0;
+	});	
+	console.log( arr );		// we do not get the right alpahbet sequence...
+	*/
+
+	var abc = o["elemek"];
+	var html = '<table class="table" id="abc_table">';
+	html += '</tr>';
+
+	for (i in abc) {
+		html += '<tr><td><font size="+5">'+ i +'</font></td><td></td></tr>'
+		html += '<tr>';
+		//console.log("(" + i + ") "+ abc[i]);
+		for (s in abc[i]) {
+			html += '<td></td><td>'+ abc[i][s] +'</td>';
+		html += '</tr>';
+		}
+	}
+	html += '</table>';
+
+	return html;
+  }
+  
+  </script>
+  
+</head>
+
+<body style="font-family: sans-serif">
+  <center>
+
+  <h1>Szóelemző program I.rész</h1>
+  <h4>Elemek és érteményeik szerkesztése</h4>
+
+  </center>
+
+  
+  <p id='header'></p>
+  
+  <p id='editor'></p>
+  
+  <p id='comment'></p>
+  
+  <p id='footer'></p>
+  
+  <p id='ex_it'></p>
+  
+<script>
+  // SAVE A JSON DOCUMENT.
+  function saveDocu() {
+    // Save Dialog
+    let fname = window.prompt("Adj nevet...")
+
+    // Check json extension in file name
+    if (fname.indexOf(".") === -1) {
+      fname = fname + ".json"
+    } else {
+      if (fname.split('.').pop().toLowerCase() === "json") {
+        // Nothing to do
+      } else {
+        fname = fname.split('.')[0] + ".json"
+      }
+    }
+	// Handle last changes and save
+	saveCombo("mCombo");
+	saveComment();
+    const blob = new Blob([JSON.stringify(o)], {type: 'application/json;charset=utf-8'})
+    saveAs(blob, fname);
+
+	replaceContent();
+  }
+</script>
+
+</body>
+</html>

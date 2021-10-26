@@ -1,0 +1,24 @@
+{ 
+	"comment"  : "Varga András, 2020-05-20.  Fejlesztés alatt.", 
+	"adatállományok" : { 
+		"Bemeneti adatfájl" : "", 
+		"Dialektus" : "" 
+	}, 
+	"nyelvjárás" : { 
+		"change" : { 
+		},
+		"notused" : { 
+		},
+		"meaning": { 
+		}
+	}, 
+	"nyelvjárás bővítése" : { 
+	},
+	"súgó" : {
+		"A" : "A DIALEKTUS olyan változtatásokat tesz lehetővé, amellyel módosítható és kiegészíthető az alapként megadott nyelvi készletet, és így módosított környezetben vizsgálhatók a szavak.", 
+		"B" : "Bemenetként két fájlt kell megadni:",
+		"B a)" : "az alap-meghatározásokat tartalmazza, amelyek ebben a programban nem módosíthatók",
+		"B b)" : "a nyelvjárást leíró fájl, amely adatai ebben a programban tovább bővíthetők.",
+		"C" : "A nyelvjárás-fájlból beolvasott értékek itt nem módosíthatók."
+	}
+}

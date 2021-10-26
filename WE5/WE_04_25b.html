@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+	<title>Szóelemző/WE_04_25b</title>
+	<link rel="stylesheet" href="./style/datatables.min.css">
+	<link rel="stylesheet" href="./style/select.dataTables.min.css">
+	<link rel="stylesheet" href="./style/vanilla-js-tabs.css">
+	<link rel="stylesheet" href="./style/prism.css" />	
+	<link rel="stylesheet" href="./style/we_04.css" />	
+	<link rel="stylesheet" href="./style/we_04_25.css" />	
+	
+	<script type="text/javascript" language="javascript" src="./javascript/jquery-3.3.1.js"></script>
+	<script type="text/javascript" language="javascript" src="./javascript/datatables.min.js"></script>
+    <script src="./javascript/dataTables.cellEdit.js"></script>
+    <script src="./javascript/prism.js"></script>
+    <script src="./javascript/vanilla-js-tabs.min.js"></script>
+    <script src="./javascript/we_04_25.js"></script>
+
+	<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css">
+	<script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+
+<script>
+  var oBas = null;									// basic data
+  var oDia = null;									// dialect data
+  var filenameBas = null;							// read basic data from this file
+  var filenameDia = null;							// read dialect data from this file
+  var oDialectOrigin = null;						// backup original dialect data
+  var tbl = null;
+  const DELIM = "-";
+
+  var openBasFile = function(event) {
+    var input = event.target;
+    var reader = new FileReader();
+
+    reader.onload = function(){
+		var text = reader.result;
+		filenameBas = input.files[0].name;
+
+		oBas = JSON.parse(text);
+    }
+    reader.readAsText(input.files[0]);
+
+	document.getElementById('loadDialect').disabled = false;	
+	document.getElementById('btnTovabb').disabled = false;	
+  };
+
+  var openDiaFile = function(event) {
+    var input = event.target;
+    var reader = new FileReader();
+
+    reader.onload = function(){
+		var text = reader.result;
+		filenameDia = input.files[0].name;
+		
+		oDia = JSON.parse(text);
+		oDialectOrigin = oDia;
+		start_main();
+    }
+    reader.readAsText(input.files[0]);	
+  };
+
+  function start_main() {
+	renewHead();
+	createTABS(oDia);
+	enterWord();
+  }
+  
+  ///////////// ---->>
+  function xxx_startHead2() {
+	var s = "<center>" +
+			"<p>" +
+			"Nyelvjárás esetén " +
+			"<input type='file' id='loadDialect' accept='.json' onchange='openDiaFile(event)'> " +
+			"<input type='button' value='>> Tovább >>' onclick='start_main()'>" +
+			"</p>" +
+			"</center>";
+
+	var h1 = document.getElementById("head");
+	h1.insertAdjacentHTML('beforeend', s);
+  }
+  //////////// <<<----------
+  
+  function showHeader(isShown) {
+	const s1 = "<table style='background-color: #F9FAFE;border-radius: 2vh;'>"
+			+ "<tr><td width='50%'>&nbsp;<br>"
+			+ "<input type='file' id='loadDocu' accept='.json' onchange='openBasFile(event)'></td>"
+			+ "<td style='text-align: left;'>&nbsp;<br>Ismert adatfájl betöltése.<br>&nbsp;</td>"
+			+ "</tr></table>";
+	const s2 = "<table style='background-color: #F9FAFE;border-radius: 2vh;'>"
+			+ "<tr><td width='50%'>&nbsp;<br>"
+			+ "<input type='file' id='loadDialect' accept='.json' onchange='openDiaFile(event)'></td>"
+			+ "<td style='text-align: left;'>&nbsp;<br>Opcionális. Nyelvjárás esetén<br>itt válaszd ki a nyelvjárást<br>leíró fájlt.<br>&nbsp;</td>"
+			+ "</tr></table>";
+	const s3 = "<p><input type='button' id='btnTovabb' value='>> Tovább >>' onclick='start_main()'></p>";
+	
+	const s4 = "<center><img src='./img/gondolkodo_no2.png' width='257'><p style='font-size: 0.8em;'>(C) Varga András, 2019-2020. </center>";
+
+	var msg = ""
+	if (isShown)
+		msg = "<center>" + s1 + '<p>' + s2 + '<p>' + s3 + s4 + "</center>";
+		
+	document.getElementById('head').innerHTML = msg;
+	
+	document.getElementById('loadDialect').disabled = true;
+	document.getElementById('btnTovabb').  disabled = true;
+  }
+  
+  function renewHead() {
+	document.getElementById("bgcolor").innerHTML = "";
+	//document.getElementById("head").innerHTML = "";
+	document.getElementById("head").innerHTML = "<center><h4><i><font color='red'>Betöltött fájl: '" + filenameBas + "'</font></i></h4></center>";
+  }
+  
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  function showKeyValues(o) {
+	
+	function filterChar(o2) {
+		var s = JSON.stringify(o2);
+		if (typeof o2 == "object") {
+			s = s.concat("<BR>");
+		}
+		
+		s = s.replace(/}/g, " ");
+		s = s.replace(/{/g, " ");
+		//s = s.replace(/\[/g, " ");
+		//s = s.replace(/\]/g, " ");
+		s = s.replace(/\] ?,/g, "]<BR>");
+		return s;
+	}
+	
+	s = "";
+	for (var i in o) {
+		s = s.concat(i + " : " + filterChar(o[i]) + "<br>");
+	}
+	return s;
+  }
+
+	function createTABS(obj) {
+		var s1 = "	<div class=\"js-tabs\" id=\"tabs\"><ul class=\"js-tabs__header\">";
+
+		// CREATE TITLES
+		var titles = [];
+		var oTask = obj;
+		for (x in oTask) {
+			titles.push(x.toUpperCase());
+		}
+		for (i in titles) {
+			if (titles[i] == 'COMMENT') {
+				continue;
+			};
+			s1 = s1.concat("<li><a href=\"#\" class=\"js-tabs__title\">" + titles[i] + "</a></li>");
+		}
+		s1 = s1.concat("</ul>");
+		//console.log(s1);
+		
+		// ADD CONTENT
+		var i = -1;
+		for (x in oTask) {
+			console.log('x:' + x);
+			if (x == 'comment') {
+				continue;
+			}
+			
+			i = i + 1;
+			s1 = s1.concat('<div class="js-tabs__content" id="tabs"' + i + '><h4>' + x.toUpperCase() + '</h4>');
+
+			if (x == 'nyelvjárás bővítése') {
+				s1 = s1.concat( createCardPage() );
+			} else {
+				if (x == 'adatállományok') {
+					oTask[x]["Bemeneti adatfájl"] = filenameBas;
+					oTask[x]["Dialektus"]         = filenameDia;
+				}
+				s1 = s1.concat("<p>" + showKeyValues(oTask[x]) + "</p>");
+				if (x == 'adatállományok') {
+					s1 = s1.concat( 'Dialektus fájl legutolsó állapotának elmentése: \
+							<input type="button" id="saveDialect" value="Mentés" onClick="save_dialect();">' );
+				}
+			}
+			s1 = s1.concat("</div>");
+		}
+
+		s1 = s1.concat("</div>");
+
+		document.getElementById("myTabs").innerHTML = s1;
+
+		var tabs = new Tabs({
+			elem: "tabs",
+			open: 0
+		});
+	}
+	
+	//################################  C A R D  #########################################
+	var card = Card.component;
+	var gui = card.GUI;  
+	var idx = 0;			// index of last table
+
+	function createCardPage() {
+		return '<div id="mainbox" class="box"></div> \
+				<div> \
+				  <button id="createCard"  onclick="createCard() ">Létrehoz újat</button> \
+				  <button id="getCardData" onclick="getCardData()">Adatok listája</button> \
+			    </div>';
+	}
+	
+	function createCard() {
+	  var parent = document.getElementById("mainbox");
+	  
+	  idx++;
+	  gui.init( idx );
+	  table = gui.addCard( idx );
+	  parent.appendChild( table );
+	}
+	
+	function getCardData() {
+	  gui.init( idx );
+	  var arr = gui.getCardsData( idx );
+	  
+	  // LIST DATA ALL CARDS.
+	  var s = "";
+	  for (var i = 0; i < idx; i++) {
+		s = s + JSON.stringify( arr[i] );;
+	  }
+	  alert( s );
+	}
+	//------------  új  -------------
+	function putIntoODia() {
+	  gui.init( idx );
+	  var cards = gui.getCardsData( idx );
+	  // TAKE DIALECT DATA LOADED FROM FILE.
+	  var newDia = JSON.parse(JSON.stringify( oDialectOrigin ));
+
+	  // ADD DIALECT DATA FROM CARDS.
+	  for (var i = 0; i < idx; i++) {
+		if (cards[i]["isValid"]) {
+			let key = cards[i]["letter1"];
+			let toDo= cards[i]["toDo"];
+			if (toDo == "change")
+				var value = cards[i]["letter2"];
+			if (toDo == "meaning")
+				var value = cards[i]["meaning"];
+
+			if (toDo == "change" || toDo == "meaning") {
+				let aObj   = oDia["nyelvjárás"][toDo];
+				if (key in aObj) {
+					var valArr = aObj[ key ];
+					newDia["nyelvjárás"][toDo][key].push( value );
+				} else {
+					newDia["nyelvjárás"][toDo][[key]] = [value];
+				}
+			}
+			if (toDo == "remove") {
+				let aObj   = oDia["nyelvjárás"]["notused"];
+				if (key in aObj) {
+					var valArr = aObj[ key ];
+					newDia["nyelvjárás"]["notused"]["removed"].push( key );
+				} else {
+					newDia["nyelvjárás"]["notused"]["removed"] = [key];
+				}
+			}
+		}
+	  }
+	  
+	  return newDia;
+	}
+	function getDiaChanged() {
+	  gui.init( idx );
+	  var arr = gui.getCardsData( idx );
+	  var obj = {};		// FORM: { a:b,c:d,...}
+
+	  // GATHER LETTERS FROM USER GUI.
+	  for (var i = 0; i < idx; i++) {
+		if ( arr[i]["isValid"] && arr[i]["toDo"]=="change" ) {
+			let a = arr[i]["letter1"];
+			let b = arr[i]["letter2"];
+			obj[a] = b;
+		}
+	  }
+	  // GATHER PAIRS FROM DIALECT INPUT FILE.
+	  var chg = oDialectOrigin["nyelvjárás"]["change"];
+	  if (chg) {
+		for(var i in chg){
+			let a = i;							// key
+			let b = chg[i][0];					// value, 1st elem in arr
+			obj[a] = b;
+		}
+	  }
+
+	  return obj;
+	}
+	function getDiaRemoved() { 
+	  gui.init( idx );
+	  var arr = gui.getCardsData( idx );
+	  var res = [];		// FORM: [ a,b,c,...]
+
+	  // GATHER LETTERS FROM USER GUI.
+	  for (var i = 0; i < idx; i++) {
+		if ( arr[i]["isValid"] && arr[i]["toDo"]=="remove" ) {
+			res.push( arr[i]["letter1"] );
+		}
+	  }
+	  // GATHER LETTERS FROM DIALECT INPUT FILE.
+	  if (oDialectOrigin && oDialectOrigin["nyelvjárás"]["notused"]["removed"])
+		res.push(...oDialectOrigin["nyelvjárás"]["notused"]["removed"]);
+
+	  return res;
+	}
+	function getDiaMeanings(letter) {
+	  gui.init( idx );
+	  var arr = gui.getCardsData( idx );
+	  var arr2 = [];
+
+	  // GATHER MEANINGS FROM USER GUI.
+	  for (var i = 0; i < idx; i++) {
+		if ( arr[i]["isValid"] && arr[i]["letter1"]==letter.toUpperCase() && arr[i]["toDo"]=="meaning" ) {
+			arr2.push( arr[i]["meaning"] );
+		}
+	  }
+	  // GATHER MEANINGS FROM DIALECT INPUT FILE.
+	  if ( oDialectOrigin && oDialectOrigin["nyelvjárás"]["meaning"][letter])			//upper case ??? andvarga3
+		arr2.push(...oDialectOrigin["nyelvjárás"]["meaning"][letter]);
+
+	  return arr2;
+	}
+	
+	function diaLetterChanges(word) {
+		let pairs = getDiaChanged();
+		
+		for (var i in pairs) {
+			let key = i;
+			let val = pairs[i];
+			var re = new RegExp(key,'g');
+			word = word.replace(re, val);
+			let k = 1;
+		}
+		return word;
+	}
+	function getNewLettersInDia( uLetters ) {		// andvarga xxx
+	  gui.init( idx );
+	  var arr = gui.getCardsData( idx );
+	  var arr2 = [];
+
+	  for (var i = 0; i < idx; i++) {
+		if ( arr[i]["isValid"] && arr[i]["toDo"]=="meaning" ) {
+			if ( ! uLetters.includes( arr[i]["letter1"] ) ) {
+				arr2.push( arr[i]["letter1"] );
+			}
+		}
+	  }
+	  return arr2;
+	}	
+	
+  // SAVE A JSON DOCUMENT.
+  function save_dialect() {
+	// UPDATE DIALECT DATA IN MEMORY.
+	var newDia = putIntoODia();
+    // SAVE DIALOG.
+    let fname = window.prompt("Add meg a dialektus fájl nevét...")
+
+    // CHECK JSON EXTENSION IN FILE NAME.
+    if (fname.indexOf(".") === -1) {
+      fname = fname + ".json"
+    } else {
+      if (fname.split('.').pop().toLowerCase() === "json") {
+        // NOTHING TO DO
+      } else {
+        fname = fname.split('.')[0] + ".json"
+      }
+    }
+    const blob = new Blob([JSON.stringify(newDia)], {type: 'application/json;charset=utf-8'})
+    saveAs(blob, fname);
+  }
+
+
+//////////////////////////////////////////////////////////////////////////////////
+  function enterWord() {
+	s = "<h2 id='title'></h2>Add meg a vizsgálandó szót: " +
+		"<input type='text' id='uEntered'> " +
+		"<input type='submit' value='Elküld' onClick='onWord()'>";
+	document.getElementById("word").innerHTML = "<center>" + s + "</center>";
+  };
+
+  function onWord(o){
+	clearDT();
+	
+	var w = document.getElementById('uEntered').value;
+	if(w == 0){
+		alert('Nem feldolgozható adat.');
+		return;
+	}
+	w = w.toUpperCase();
+	
+	// LOOK FOR DIALECT DATA: CHANGE.
+	if (oDia) {
+		w = diaLetterChanges( w );
+	}
+
+	var elems = split_word(w);
+	var newTitle = "A vizsgált elemek: " + elems;
+	var myTitle = document.getElementById('title');
+	myTitle.innerHTML = newTitle;
+
+	// PROCESS USER WORD
+	createFieldSet();
+	createCombo(elems);
+  };
+
+	/////////// PARSER ////////////////////
+	var arr = null;
+	var user_entered = null;
+	var user_parsed  = null;
+	var letter_not_found = "";
+
+	function split_word(w) {
+		user_entered = w.toUpperCase();
+		// CREATE SORTED LIST OF LETTERS IN ABC
+		// A SOUND(LETTER) CAN BE PRESENTED BY MORE CHARACTERS
+		arr = new Array();
+		for (x in oBas.elemek) {
+			arr.push(x);
+		}
+		if (oDia) {
+			var arr2 = [];
+			arr2 = getNewLettersInDia( arr );
+			console.log("NEW USER LETTERS: " + arr2);	// andvarga xxx
+			arr.push(...arr2);
+		}
+		
+		arr.sort(function(a, b) {
+			return b.length - a.length || [a,b].sort()[0]===b;
+		});
+		parse();
+		return user_parsed;
+	};
+	
+	function parse() {
+		//console.log('user entered:' + user_entered +'\narray:' + JSON.stringify(arr));
+		user_parsed = new Array();
+		
+		user_arr = user_entered.split(",");
+		for(var i = 0; i < user_arr.length; i++) {
+			parse_recursive( user_arr[i] );
+		}
+	};
+
+	function parse_recursive(s) {
+		if (s == "") {
+			return;
+		}
+		for (i in arr) {
+			tk = arr[i];									// token 
+			if (s.substring(0, tk.length)==tk) {
+				user_parsed.push(tk);
+				parse_recursive(s.substring(tk.length));	// cut found str
+				return;
+			}
+		}
+		let letter_not_found = s.substring(0,1)
+		//let msg = "Az '" + letter_not_found  + "' betű nem találtatott a megadott betűsorban.";
+		//alert(msg);
+		user_parsed.push( letter_not_found );
+		parse_recursive(s.substring( 1 ));
+		return;
+	};
+
+  /////////////////////////////////////////////////////
+  function createFieldSet() {
+	s = "<fieldset id='filterForm'>" +
+        "<legend>Az értemények összeszedése/kiválogatása</legend>" +
+        "<p id='elso[]'>" +
+			"<p id='masod[]'>" +
+            "<input type='button' id='filt-submit' value='Tovább' onclick='onFilter();'/>" +
+			"</p>" +
+        "</p>" +
+      "</fieldset>";
+	document.getElementById("dd_lists").innerHTML = s ;
+  };
+
+  var idList = [];
+
+  function createCombo(letters) {
+	idList = [];		// clear array
+	var wm = [];		// wm = word meaning (list of lists)
+	var idx = 0;
+
+	for (i in letters) {
+		let oneLetter = letters[i];
+		let lst = oBas.elemek[oneLetter];
+		if (!lst) {							// letter not found in Base
+			lst = getDiaMeanings(oneLetter)
+		}
+		//if (lst.length == 0) {				// letter not found in Dialog
+		//	;
+		//}
+		try {
+			// DEEP COPY: JSON.parse(JSON.stringify(object))
+			var letterMeaningList = JSON.parse(JSON.stringify( oBas.elemek[oneLetter] ))
+		} catch {
+			var letterMeaningList = [];
+		}
+		var newMeanings = getDiaMeanings(oneLetter);
+		
+		if (newMeanings.length > 0) {
+			letterMeaningList.push( ...newMeanings );
+		}
+		idx += 1;
+		lst = getDiaRemoved();
+		if ( lst.includes(oneLetter) )
+			letterMeaningList = [ "[" + oneLetter + "]" ];
+		if ( letterMeaningList.length == 0) 	// letter not defined in JSON input data
+			letterMeaningList = [ "[" + oneLetter + "]" ];
+		fillCombo(letterMeaningList, oneLetter, i);
+	}
+  };
+
+	// CONTAINS LIST OF HTML.COMBOBOX.ELEMENT.ID-s
+	function fillCombo(meanings, ltr, seq) {
+		var combo = document.createElement("select");
+		combo.setAttribute('multiple', true); 
+		combo.setAttribute('size', "10");
+		
+		// FORMAT: 'sel' + DELIM + seq.nr OF LETTER IN ENTERED WORD.
+		var newId = "sel" + ltr + seq;		
+		idList.push( newId );
+		combo.setAttribute('id', newId ); 
+
+		for (i in meanings) {
+			//console.log( meanings[i] );
+			var option = document.createElement("option");
+			option.value = ltr + DELIM + i;
+			option.text = meanings[i];
+			combo.appendChild(option);
+		}
+		var para = document.getElementById( "elso[]" ),
+			bold = document.createElement('strong'),
+			text = document.createTextNode( ltr + ":  " );
+			bold.appendChild(text);
+
+		para.appendChild( bold );
+		para.appendChild( combo );
+	};
+
+	// PROCESS PUSH BUTTON. USES ARRAY OF ARRAYS, CONTAINING SELECTED MEANINGS.
+	function onFilter() {
+		var ff = document.getElementById( 'filterForm' );
+		var wm = [];
+
+		// TITEL OF PRINTED DOCU
+		document.title = document.getElementById('uEntered').value.toUpperCase() 
+						+ '--' 
+						+ filenameBas.slice(0, -5);
+		
+		for (var i in idList) {
+			var arr = getSelectTexts( ff.elements[idList[i]] );
+			wm.push( arr );
+		}			
+		
+		var arrVari = allPossibleCases( wm );
+		showTable( arrVari );
+		showFoot( true );
+	};
+    
+	function getSelectTexts(select) {
+	  var result = [];
+	  var options = select && select.options;
+	  var opt;
+
+	  for (var i=0, iLen=options.length; i<iLen; i++) {
+		opt = options[i];
+
+		if (opt.selected) {
+		  result.push( opt.text );
+		}
+	  }
+	  
+	  if ( result.length == 0 ) {
+		result.push( "(-) " );
+	  }
+	  
+	  return result;
+	};
+
+  // Code is taken from: https://stackoverflow.com/questions/4331092/finding-all-combinations-cartesian-product-of-javascript-array-values
+  function allPossibleCases(arr) {
+	if (arr.length == 1) {
+		return arr[0];
+	} else {
+		var result = [];
+		var allCasesOfRest = allPossibleCases(arr.slice(1));  // recur with the rest of array
+		for (var i = 0; i < allCasesOfRest.length; i++) {
+		  for (var j = 0; j < arr[0].length; j++) {
+			result.push(arr[0][j] + " + " + allCasesOfRest[i]);
+		  }
+		}
+		return result;
+	}
+  }
+
+  function showTable(arr) {
+  		var v2 = [];
+		for (var i in arr) {
+			var ar2 = [];
+			ar2.push('');ar2.push(arr[i]);ar2.push('');
+			v2.push(ar2);
+		}			//console.log("v2:" + v2);
+
+        // EXTRACT VALUE FOR HTML HEADER. 
+        const col = ["Eltárol", "Eredmény", "Értékelés [%]"];
+
+		// CREATE OBJECT LIST FOR DataTable COLUMN NAMES.
+		var c2 = [];
+		for (var i = 0; i < col.length; i++) {
+			var o2 = new Object();
+			o2.title = col[i];
+			if ( i == 0 ) {
+				o2.width = '10%';
+			}
+			if ( i == 1 ) {
+				o2.width = '80%';
+			}
+			c2.push(o2);
+		}
+
+		$(document).ready(function() {
+			if (tbl) {
+				tbl.MakeCellsEditable("destroy");
+				tbl.destroy();
+				tbl = null;
+			}
+			
+			tbl = $('#result').DataTable( {
+				dom: 'Bfrtip',
+				buttons: [
+				'copyHtml5',
+				'excel',
+					{
+						extend: 'pdfHtml5',
+						messageTop: headerText()
+					},
+					{
+						text: 'Teljes mentés',
+						action: function ( e, dt, button, config ) {
+							var rows = dt.rows({selected: true}).data().toArray();
+							var text = "{\"in\":" 
+										+ JSON.stringify( oBas ) 
+										+ ",\"entered\":\"" 
+										+ document.getElementById('uEntered').value
+										+ "\",\"out\":" 
+										+ JSON.stringify( rows ) 
+										+ "}";
+
+							$.fn.dataTable.fileSave(
+								new Blob( [ text ] ),
+								document.title + '.json'
+							)
+						}
+					}
+				],
+				data: v2,
+				columns: c2,
+				columnDefs: [ {
+					orderable: false,
+					className: 'select-checkbox',
+					targets:   0
+				} ],
+				select: {
+					selector: 'td:first-child',
+					style:    'multi'
+				},
+				order: [[ 1, 'asc' ]],
+				"lengthMenu": [ 10, 25, 50 ],
+				"pageLength":50
+			});
+
+			tbl.MakeCellsEditable({
+				"onUpdate": myCallbackFunction
+			});
+
+		}); 
+		
+	function headerText() {
+		return oBas.comment + ".\n\n";
+	}
+	
+	function myCallbackFunction(updatedCell, updatedRow, oldValue) {
+		//console.log("The old value for that cell was: " + oldValue);
+		//console.log("The new value for the cell is: " + updatedCell.data());
+	}
+	
+  }
+
+  function clearDT() {
+	// CLEAR DATA TABLE.
+	if (tbl) {
+		tbl.clear().draw();
+		tbl.MakeCellsEditable("destroy");
+		tbl.destroy();
+		tbl = null;
+	}
+	showFoot( false );
+  }
+  
+  function showFoot(isShown) {
+	
+	if (isShown) {
+		s = "<center><p><font size='-1'><center>"
+		  + "Csak a megjelölt (kipipált) elemek lesznek elmentve.</p>"
+		  + "A program befejezése: <input type='button' id='btnExit' value='Kilépés' onclick='	replaceContent();'></p></center>";
+
+		document.getElementById('foot').innerHTML = s;
+		document.getElementById('foot').style.visibility = "visible";
+		
+	} else {
+		document.getElementById('foot').style.visibility = "hidden";
+	}
+	
+  }
+  function replaceContent() {
+	const newContent = "<html><head></head><body><center>"
+					 + "<br><br>Köszönjük, hogy használtad a programot."
+					 + "<br><br><img src='./img/gondolkodo_no2.png' width='257'>"
+					 + "<br><br>Újra indíthatod a programot a Ctrl + F5  billenyűkombinációval.</center></body></html>";
+	document.open();
+	document.write( newContent );
+	document.close();
+  }
+
+  function setBgColor() {
+	const s1 = "<select id='select'>"
+				+ "<option value='WHITE'>       Háttérszín:</option>"
+				+ "<option value='POWDERBLUE'>  halványkék </option>"
+				+ "<option value='LIGHTSALMON'> tégla      </option>"
+				+ "<option value='MEDIUMAQUAMARINE'>zöld   </option>"
+				+ "<option value='PAPAYAWHIP'>  papaya     </option>"
+				+ "<option value='MISTYROSE'>  halványrózsa</option>"
+				+ "</select>";
+
+	if ( window.location.search == '?bgcolor' ) {
+			document.getElementById('bgcolor').innerHTML = s1 ;
+			
+		const color_arr = [ '', 'powderblue', 'red', 'green', 'yellow'];
+		var select = document.getElementById('select');
+
+		select.onchange = function() {
+			document.body.style.backgroundColor = select[select.selectedIndex].value;
+		}
+	}
+  }
+
+</script>
+</head>
+
+<body>
+  <font face = "arial,helvetica">
+  <center>
+  
+	<h1>Szóelemző program II.rész</h1>
+	<h4>Elemek jelentése alapján a szó jelentése</h4>
+
+	<p id='bgcolor' /> <script type="text/javascript"> setBgColor(); </script>
+  </center>
+
+  <p id="head"> <script type="text/javascript"> showHeader(true); </script> </p>
+
+  <p id="myTabs"></p>
+
+  <p id="word"></p>
+	
+  <p id="dd_lists"></p>
+
+  <table id="result" class="display" style="width:100%"></table>
+
+  <p id="foot"></p>
+
+  
+</body>
+</html>
+
+<!--
+add array elements to another array:  >>> a.push(...b)
+//get kay and value from object
+for(var i in foo){
+  alert(i); // alerts key
+  alert(foo[i]); //alerts key's value
+}
+-->

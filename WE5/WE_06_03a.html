@@ -1,0 +1,195 @@
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+  <title>Sorbatétel/WE_06_03a</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2014-11-29/FileSaver.min.js"></script>
+  <script src="./javascript/jquery-3.3.1.js"></script>
+  <script>
+
+  //READ THIS OBJECT FROM FILE, SAVED INTO FILE.
+  var o = new Object();
+  
+  // LOAD A JSON DOCUMENT.
+  var openFile = function(event) {
+    var input = event.target;
+    var reader = new FileReader();
+
+    reader.onload = function(){
+		var text = reader.result;
+		//console.log(reader.result);
+	
+		o = JSON.parse(text);
+		initSorter();
+    };
+	
+    reader.readAsText( input.files[0] );	
+  };
+
+  /////////////////////////////////////////////////////////////////////
+
+	var letterList = new Array();
+
+	function initSorter() {
+		document.getElementById( "loadDocu" ).disabled = true;
+		//document.getElementById( "saveDocu" ).disabled = false;
+		showHeader( false );
+		showSorter( true );
+		
+		for (var ky in o.elemek) {
+			letterList.push( ky );			
+		}
+		
+		var combo = document.getElementById( "lCombo" );
+		
+		for (i in letterList) {
+			var val = letterList[i];
+			var option = document.createElement( "option" );
+			
+			option.value = option.text = val;
+			try {
+				combo.add( option, null ); //Standard
+			}catch(error) {
+				combo.add( option ); 		// IE only
+			}
+		}
+		
+		showFooter( 1 );
+	}
+	
+	function newlyOrdered() {
+		var nArr = new Array();		// n = new
+		var select = document.getElementById( "rCombo" );
+		var length = select.options.length;
+		
+		for (var i = 0; i < length; i++) {
+			nArr.push( select.options[i].value );
+		}
+
+		return lettersWithMeanings( nArr );
+	}
+	
+	function lettersWithMeanings( newArr ) {
+		var obj = new Object();
+		var elemek = {};
+		
+		obj.comment = o.comment;
+		for (var idx in newArr) {
+			var uLetter = newArr[idx];
+			elemek[uLetter] = o.elemek[uLetter]
+		}
+		obj["elemek"] = elemek;
+		return obj;
+	}
+	
+	function showHeader( isShown ) {
+		const s = "<center><table style='background-color: #F9FAFE;border-radius: 2vh;'>"
+				+ "<tr><td width='50%'>&nbsp;<br>"
+				+ "<input type='file' id='loadDocu' accept='.json' onchange='openFile(event);'></td>"
+				+ "<td>&nbsp;<br>Ismert adatfájl betöltése.<br>Ebben a fájlban szeretnénk <br>az elemek sorrendén változtatni.<br>&nbsp;</td>"
+				+ "</tr></table></center>";
+
+		var msg = ""
+		if (isShown)
+			msg = s;
+		document.getElementById('header').innerHTML = msg;
+	}
+	
+	function showSorter( isShown ) {
+		const s = "<h4>Régi sorrend --&gt;  Új sorrend</h4>"
+				+ "<select multiple name='lCombo' id='lCombo' size='16' onclick='onMoveRight();'></select>"
+				+ " &nbsp; &nbsp; &nbsp; &nbsp; "
+				+ "<select multiple name='rCombo' id='rCombo' size='16' onchange='onMoveLeft();'></select>";
+		var msg = "";
+
+		if (isShown)
+			msg = s;
+		
+		document.getElementById( 'sorter' ).innerHTML = msg;
+	}
+	
+	function showFooter( idx ) {
+		const footTexts = [
+				"<center><img src='./img/abc_piramis.png' width='257'>"
+				  + "<p>(C) Varga András, 2019-2020. </center>",
+				"A betűre kattintva bal oldalról jobbra, jobbról balra tudod mozgatni az elemeket."
+				  + "<br>A jobb oldali sorrend lesz elmentve."
+				  + "<br><center><p>Adatfájl mentése: "
+				  + "<input type='button' id='saveDocu' value='Mentés' onclick='saveDocu();'>"
+				  + " &nbsp; &nbsp; &nbsp; Kilépés mentés nélkül: "
+				  + "<input type='button' id='btnExit' value='Kilépés' onclick='	replaceContent();'>"
+				  + "</p></center>"
+			  ]
+			  
+		document.getElementById( 'footer' ).innerHTML = "<font size='-1'>" + footTexts[ idx ];
+	}
+
+	function onMoveRight() {
+		$("#lCombo option:selected").remove().appendTo($("#rCombo"));
+	}
+	
+	function onMoveLeft() {
+		$("#rCombo option:selected").remove().appendTo($("#lCombo"));
+	}
+	
+	$(document).ready(function() {
+		showHeader( true );
+		showFooter( 0 );
+	});
+
+	function replaceContent() {
+		const newContent = "<html><head></head><body><center>"
+						 + "<br><br>Köszönjük, hogy használtad a programot."
+						 + "<br><br><br><img src='./img/abc_piramis.png' width='160'>"
+						 + "<br><br>Újra indíthatod a programot a Ctrl + F5  billenyűkombinációval.</center></body></html>";
+		document.open();
+		document.write( newContent );
+		document.close();
+	}
+
+  </script>
+</head>
+
+<body style="font-family: sans-serif">
+  <center>
+  
+	<h1>Szóelemző program I/b.rész</h1>
+	<h4>Elemek újrarendezése</h4>
+  
+  <p id='header'></p>
+  
+  <p id='sorter'></p>
+  
+  <p id='footer'></p>
+  
+  <p id='ex_it'></p>
+  
+  </center>
+<script>
+  // SAVE A JSON DOCUMENT.
+  function saveDocu() {
+    // Save Dialog
+    let fname = window.prompt("Adj nevet...")
+
+    // Check json extension in file name
+    if (fname.indexOf(".") === -1) {
+      fname = fname + ".json"
+    } else {
+      if (fname.split('.').pop().toLowerCase() === "json") {
+        // Nothing to do
+      } else {
+        fname = fname.split('.')[0] + ".json"
+      }
+    }
+	// Handle last changes and save
+	var o2 = newlyOrdered();
+    const blob = new Blob([JSON.stringify(o2)], {type: 'application/json;charset=utf-8'})
+    saveAs(blob, fname);
+
+	replaceContent();
+  }
+</script>
+
+</body>
+</html>

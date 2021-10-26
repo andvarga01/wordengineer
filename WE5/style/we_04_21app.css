@@ -1,0 +1,51 @@
+  body {
+    font-family: "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif;
+  }
+  table, th, td {
+	border-radius: 1em;
+  }
+  th, td {
+	padding: 5px;
+	text-align: right;
+	vertical-align: top;
+	text-align: center;
+  }
+  .box {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: left;
+	flex-basis: 270px;
+	margin-right: 20px;
+  }
+  .card {
+	position: relative;
+	width: 160px;
+    height: 300px;
+	border: 1px solid #a0a0a0;
+	margin: 7px;
+	font-size: smaller;
+  }
+  .bottomRight {
+	position: absolute;
+	top: 280px;
+	right: 0;
+	width: 40px;
+	height: 12px;
+  }
+  .btn-link {
+	background: none!important;
+	border: none;
+	padding: 0!important;
+	font-family: arial, sans-serif;
+	cursor: pointer;
+ }
+ .meaning {
+	height: 200px;
+	justify-content: middle;
+	vertical-align: middle;
+ }
+  .checkboxMiddle {
+	position: absolute;
+	top: 232px;
+	right: 32px;
+ }

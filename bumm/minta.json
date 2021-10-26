@@ -1,0 +1,27 @@
+{
+	"abc" : {
+		"author"  : "Varga András",
+		"version" : "1.0",
+		"date"    : "2020-03-09",
+		"note"    : ["elkezdve... és ez a két hang sem teljes. Csak mintaként használandó."]
+	},
+	"elemek" : {
+		"E" : {
+			"desc" : {
+				"konkrét" : ["időben, térben közel"],
+				"elvont"  : ["eszmei jelentésű"]
+			}
+		},
+		"Z" : {
+			"desc": {
+				"ilyen"   : ["folyamatos, időben hosszan elnyújtva"]
+			}
+		}
+	},
+	"dialect" : {
+		"author"  : "Varga András",
+		"version" : "1.0",
+		"date"    : "2020-03-20",
+		"note"    : ["(üres, használatlan...)"]
+	}
+}
